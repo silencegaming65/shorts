@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-impact: "Bebas Neue", sans-serif;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.font-impact {
+  font-family: var(--font-impact);
+}

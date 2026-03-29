@@ -1,0 +1,7 @@
+{
+  "name": "shorts thumbnail maker",
+  "description": "Generate professional-grade vertical YouTube thumbnails for Shorts using AI. Just provide a title and your headshot.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
