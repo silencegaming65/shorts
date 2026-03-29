@@ -2,13 +2,24 @@ export async function handler(event) {
   try {
     const apiKey = process.env.GEMINIAPIKEY;
 
-    // Get data from frontend
-    const { title, photo } = JSON.parse(event.body);
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "No data received" }),
+      };
+    }
 
-    // Clean base64 image
-    const base64Data = photo.split(',')[1] || photo;
+    const { title, photo } = JSON.parse(event.body || "{}");
 
-    // Call Gemini API
+    if (!photo) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "No image provided" }),
+      };
+    }
+
+    const base64Data = photo.split(',')[1];
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
       {
@@ -27,19 +38,18 @@ export async function handler(event) {
                   },
                 },
                 {
-                  text: `Create a high-quality YouTube thumbnail for: ${title}`,
+                  text: `Create a YouTube thumbnail for: ${title}`,
                 },
               ],
             },
           ],
-          generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"],
-          },
         }),
       }
     );
 
     const data = await response.json();
+
+    console.log("Gemini response:", data);
 
     let imageUrl = "";
 
@@ -48,11 +58,16 @@ export async function handler(event) {
     for (const part of parts) {
       if (part.inlineData) {
         imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-        break;
       }
     }
 
-    // Return image to frontend
+    if (!imageUrl) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "No image generated", raw: data }),
+      };
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ imageUrl }),
