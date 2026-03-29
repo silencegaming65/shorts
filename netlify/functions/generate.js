@@ -1,82 +1,37 @@
 export async function handler(event) {
   try {
     const apiKey = process.env.GEMINIAPIKEY;
-
-    if (!event.body) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "No data received" }),
-      };
-    }
-
-    const { title, photo } = JSON.parse(event.body || "{}");
-
-    if (!photo) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "No image provided" }),
-      };
-    }
-
-    const base64Data = photo.split(',')[1];
+    const { title, photo } = JSON.parse(event.body);
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  inlineData: {
-                    data: base64Data,
-                    mimeType: "image/jpeg",
-                  },
-                },
-                {
-                  text: `Create a YouTube thumbnail for: ${title}`,
-                },
-              ],
-            },
-          ],
-        }),
+          contents: [{
+            parts: [
+              { text: `Create a YouTube Shorts thumbnail. TITLE: "${title}". Use the person in the photo. Cinematic style.` },
+              { inlineData: { mimeType: "image/jpeg", data: photo.split(',')[1] || photo } }
+            ]
+          }],
+          generationConfig: { response_mime_type: "application/json" }
+        })
       }
     );
 
     const data = await response.json();
-
-    console.log("Gemini response:", data);
-
-    let imageUrl = "";
-
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-
-    for (const part of parts) {
-      if (part.inlineData) {
-        imageUrl = `data:image/png;base64,${part.inlineData.data}`;
-      }
-    }
-
-    if (!imageUrl) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "No image generated", raw: data }),
-      };
-    }
+    // This looks for the base64 image string Gemini sends back
+    const generatedImage = data.candidates[0].content.parts[0].inlineData.data;
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ imageUrl }),
+      body: JSON.stringify({ image: `data:image/png;base64,${generatedImage}` }),
     };
-
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ error: "AI Failed: " + error.message }),
     };
   }
 }
