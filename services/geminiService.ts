@@ -12,8 +12,8 @@ export const generateThumbnail = async (title: string, photo: string): Promise<s
 
     console.log("Backend response:", data);
 
-    // TEMP: return placeholder image (so error stops)
-    return "https://via.placeholder.com/300x500?text=Thumbnail+Generated";
+    // ✅ RETURN REAL IMAGE
+    return data.imageUrl;
     
   } catch (error) {
     console.error("Frontend Error:", error);
